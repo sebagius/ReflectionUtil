@@ -49,9 +49,6 @@ def fetch(file, url):
 
 
 def fetch_all():
-    Path("sources").mkdir(exist_ok=True)
-    Path("out").mkdir(exist_ok=True)
-
     for x in SPIGOT_COMMIT_VERSIONS:
         fetch('sources/{}-class.s_'.format(x), SPIGOT_CLASSES.format(x, SPIGOT_COMMIT_VERSIONS[x]))
         fetch('sources/{}-method.s_'.format(x), SPIGOT_METHODS.format(x, SPIGOT_COMMIT_VERSIONS[x]))

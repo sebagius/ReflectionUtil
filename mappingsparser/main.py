@@ -3,6 +3,7 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import json
+from pathlib import Path
 
 import DataFetcher
 
@@ -129,12 +130,14 @@ def initialise_mc(mojang):
             class_mc_to_spigot[class_details[0]] = class_name.replace("/", ".")
 
 
-def start(bukkit, bukkit_members, mojang, ex):
+def start(bukkit, bukkit_members, mojang, ex, docfile, version):
     initialise_spigot(bukkit, bukkit_members)
     initialise_mc(mojang)
     global current_class, class_fields, class_methods, export, class_constructors
 
     exportfile = open(ex, 'w')
+    document = open(docfile, 'w')
+    document.write("<html><head><title>{} Docs</title></head><body>".format(version))
     num = 0
     with open(mojang) as f:
 
@@ -189,18 +192,29 @@ def start(bukkit, bukkit_members, mojang, ex):
 
             if not current_class == "":
                 exportfile.write("{}\n".format(map_classname(current_class)))
+                document.write("<h2>{}</h2>".format(map_classname(current_class)))
+
+                document.write("<h3>Fields</h3>")
                 for field in class_fields:
                     f = class_fields[field]
                     exportfile.write("  {} {} {}\n".format(f['t'], field, f['o']))
                     exportfile.flush()
+                    document.write("<span><strong>{} ({})</strong> - Returns {}</span><br>".format(field, f['o'], f['t']))
+                    document.flush()
+                document.write("<h3>Methods</h3>")
                 for method in class_methods:
                     m = class_methods[method]
                     exportfile.write("  {} {} {} {}\n".format(m['t'], method, ",".join(m['a']), m['o']))
                     exportfile.flush()
+                    document.write(
+                        "<span><strong>{} ({})</strong> - Returns {}</span><br><strong>Arguments</strong> - {}<br><br>".format(
+                            field, f['o'], f['t'], ",".join(m['a'])))
+                    document.flush()
                 for constructor in class_constructors:
                     exportfile.write("  _ {}\n".format(",".join(constructor['a'])))
                     exportfile.flush()
                 exportfile.flush()
+                document.flush()
             class_fields = {}
             class_methods = {}
             class_constructors = []
@@ -211,13 +225,20 @@ def start(bukkit, bukkit_members, mojang, ex):
             if map_classname(current_class) not in method_spigot_mappings.keys():
                 current_class = ""
 
+    document.write("</body></html>")
+    document.flush()
+    document.close()
     exportfile.close()
 
 
 if __name__ == '__main__':
+    Path("sources").mkdir(exist_ok=True)
+    Path("out").mkdir(exist_ok=True)
+    Path("docs").mkdir(exist_ok=True)
+
     DataFetcher.fetch_all()
     print("Starting mapping process...")
     for x in DataFetcher.MINECRAFT_VERSIONS:
         start("sources/{}-class.s_".format(x), "sources/{}-method.s_".format(x), "sources/{}-all.m_".format(x),
-              "out/{}.map".format(x))
+              "out/{}.map".format(x), "docs/{}.html".format(x), x)
         print("Created map for {} :))".format(x))
